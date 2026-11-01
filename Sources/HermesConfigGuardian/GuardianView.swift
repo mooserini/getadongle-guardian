@@ -33,6 +33,21 @@ struct GuardianView: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
+            if model.latestObservedEvent != nil || model.observationHistoryWarning != nil {
+                VStack(alignment: .leading, spacing: 4) {
+                    if let event = model.latestObservedEvent {
+                        Text("Observed by Guardian · \(event.channel.rawValue) · \(event.observedAt.formatted(date: .abbreviated, time: .standard))")
+                            .help("Local time when Guardian selected an attention event, not the exact write time or approval time. Metadata records are retained without automatic deletion.")
+                    }
+                    if let warning = model.observationHistoryWarning {
+                        Text(warning).foregroundStyle(.orange)
+                    }
+                }
+                .font(.caption)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            }
+
             if case let .error(message) = model.status {
                 Text(message)
                     .font(.caption)

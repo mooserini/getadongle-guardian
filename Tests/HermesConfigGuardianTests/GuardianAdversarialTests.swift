@@ -154,6 +154,8 @@ final class GuardianAdversarialTests: XCTestCase {
                 "HCG_STATE_DIR": state.path,
                 "HCG_PENDING_SKILLS_DIR": source.deletingLastPathComponent().appendingPathComponent("pending-skills").path,
                 "HCG_SKILLS_DIR": source.deletingLastPathComponent().appendingPathComponent("active-skills").path,
+                "HCG_HERMES_HOME": source.deletingLastPathComponent().appendingPathComponent("hermes-home").path,
+                "HCG_HERMES_DOCS_DIR": source.deletingLastPathComponent().appendingPathComponent("docs").path,
                 "HCG_RECONCILE_INTERVAL": "3600",
             ],
             userDefaults: UserDefaults(suiteName: "GuardianAdversarialTests.\(UUID().uuidString)")!

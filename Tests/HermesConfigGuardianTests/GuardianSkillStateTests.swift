@@ -179,6 +179,8 @@ final class GuardianSkillStateTests: XCTestCase {
                 "HCG_STATE_DIR": fixture.state.path,
                 "HCG_PENDING_SKILLS_DIR": fixture.pending.path,
                 "HCG_SKILLS_DIR": fixture.skills.path,
+                "HCG_HERMES_HOME": fixture.root.appendingPathComponent("hermes-home").path,
+                "HCG_HERMES_DOCS_DIR": fixture.root.appendingPathComponent("docs").path,
                 "HCG_RECONCILE_INTERVAL": "3600",
             ],
             userDefaults: defaults,

@@ -78,6 +78,8 @@ final class GuardianModel: ObservableObject {
     @Published private(set) var pending: PendingChange?
     @Published private(set) var approved: ApprovedSnapshot?
     @Published private(set) var lastCheckedAt: Date?
+    @Published private(set) var latestObservedEvent: ObservedEvent?
+    @Published private(set) var observationHistoryWarning: String?
     @Published private(set) var maintenance: MaintenanceWindow?
     @Published private(set) var maintenanceObservedCount = 0
     @Published private(set) var maintenanceReviewReady = false
@@ -168,6 +170,7 @@ final class GuardianModel: ObservableObject {
         }
     }
 
+    private let observedEventStore: ObservedEventStore
     private let store: ApprovalStore
     private let maintenanceStore: MaintenanceStore
     private let skillsIntegrityStore: SkillsIntegrityStore
@@ -230,6 +233,7 @@ final class GuardianModel: ObservableObject {
             lastNotifiedProposalHash: lastSkillFingerprint?.isEmpty == false ? lastSkillFingerprint : nil
         )
         performAttentionSound = playAttentionSound
+        observedEventStore = ObservedEventStore(stateDirectory: stateDirectory)
         store = ApprovalStore(stateDirectory: stateDirectory)
         maintenanceStore = MaintenanceStore(stateDirectory: stateDirectory)
         skillsIntegrityStore = SkillsIntegrityStore(stateDirectory: stateDirectory)
@@ -260,6 +264,14 @@ final class GuardianModel: ObservableObject {
             }
         } catch {
             status = .error(error.localizedDescription)
+        }
+
+        do {
+            let history = try observedEventStore.loadLatest()
+            latestObservedEvent = history.event
+            if history.incomplete { observationHistoryWarning = "Observation history is incomplete: some records could not be read." }
+        } catch {
+            observationHistoryWarning = "Observation history could not be read."
         }
 
         startWatching()
@@ -755,6 +767,8 @@ final class GuardianModel: ObservableObject {
             break
         }
         guard skillAttentionGate.shouldNotify(proposalHash: fingerprint) else { return }
+        // Preserve the existing gate, but retain no skill paths or diagnostics.
+        recordObservation(channel: .skills, fingerprint: ApprovalStore.sha256(Data(fingerprint.utf8)))
         try? FileManager.default.createDirectory(
             at: stateDirectory,
             withIntermediateDirectories: true
@@ -781,6 +795,7 @@ final class GuardianModel: ObservableObject {
 
     private func notifyIfNeeded(proposalHash: String) {
         guard attentionGate.shouldNotify(proposalHash: proposalHash) else { return }
+        recordObservation(channel: .config, fingerprint: proposalHash)
         try? FileManager.default.createDirectory(
             at: stateDirectory,
             withIntermediateDirectories: true
@@ -795,6 +810,15 @@ final class GuardianModel: ObservableObject {
         }
         if attentionWindowEnabled {
             openAttentionWindow?()
+        }
+    }
+
+    private func recordObservation(channel: ObservedEvent.Channel, fingerprint: String) {
+        do {
+            latestObservedEvent = try observedEventStore.append(channel: channel, fingerprint: fingerprint)
+        } catch {
+            // Keep existing attention and decision behavior independent of diagnostics.
+            observationHistoryWarning = "Observation history could not be saved; some observations may be missing."
         }
     }
 
