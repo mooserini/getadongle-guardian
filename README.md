@@ -1,6 +1,6 @@
-# Hermes Guardian
+# Getadongle Guardian
 
-Hermes Guardian is an independent macOS menu-bar sentry for human-approved changes to a Hermes Agent `config.yaml` file, plus read-only visibility into Hermes pending-skill and active-skill filesystem state.
+Getadongle Guardian is an independent macOS guardian for recorded Agent configuration changes. Its menu-bar sentry supports human-approved changes to a Hermes Agent `config.yaml` file, plus read-only visibility into Hermes pending-skill and active-skill filesystem state.
 
 It preserves an exact approved snapshot outside Hermes, detects raw and semantic changes, explains the relevant settings with official Hermes documentation, and waits for a human to accept, review, clarify, or reject the change. Reject restores the last approved bytes immediately.
 
@@ -53,6 +53,8 @@ For controlled comparisons, `HCG_HERMES_CLARIFY_PROVIDER` and `HCG_HERMES_CLARIF
 
 ## Build and test
 
+The product name is Getadongle Guardian. The build artifacts, environment variables, and state paths documented below retain their existing technical names; renaming those is a separate code-side step.
+
 Build requirements:
 
 - macOS 14 or newer
@@ -61,8 +63,8 @@ Build requirements:
 Start from a checkout and confirm the selected toolchain:
 
 ```sh
-git clone https://github.com/mooserini/hermes-config-guardian.git
-cd hermes-config-guardian
+git clone https://github.com/mooserini/getadongle-guardian.git
+cd getadongle-guardian
 swift --version
 sw_vers
 ```
@@ -219,6 +221,15 @@ The evidence and limits from the first trial against a real Hermes configuration
 This candidate adds read-only pending-skill and active-skills integrity indicators without granting Guardian authority to approve, reject, restore, or edit skills. Configuration approval remains a separate human decision.
 
 The implemented [durable maintenance window](docs/design/durable-maintenance-window.md) groups the many writes made by an intentional Hermes update into one final human review without granting the updater automatic approval.
+
+### The Getadongle Guardian rebuild
+
+The rename is the visible edge of a rebuild whose design is settled. Everything above this section describes the build as it runs today; the items below are decided direction, not shipped capability — recorded here so this document describes the project as it is actually laid out, not a snapshot it has already decided past.
+
+- **Complete the rename in code.** Display names, window titles, and the app bundle adopt Getadongle Guardian. The bundle identifier, module and target names, environment variable names, and on-disk state paths deliberately stay as they are, so existing enrollments, snapshots, and settings carry over untouched.
+- **Enroll `.env` files.** An environment file is field-and-key — the same shape as the YAML configuration the Guardian already watches — so it enrolls with the same treatment: exact-byte snapshots, semantic diffs with credentials redacted by key name, and approve/reject receipts recorded whether or not anyone ever looks. Changes accumulate on the record; attention stays the owner's choice. The first enrollment is the `.env` beside the configuration the Guardian already watches.
+- **Make clarification agnostic.** The explanation rail stops resolving through Hermes. The cloud leg becomes OpenRouter — one endpoint, many providers — with the model chosen from a dropdown resolved live from OpenRouter's public catalog and filtered to free models at selection time. A visible preference, prefer cloud first or prefer Apple Intelligence on-device first, replaces the hardcoded fallback order; the deterministic summary remains the floor. The Guardian holds its own OpenRouter credential: enabling cloud with no key on file reveals a concealed paste field with a reveal-to-confirm control, saved alongside the other `HCG_*` variables. The catalog is a directory, not an advertisement — no model is promoted, sponsored, or affiliated.
+- **Report degraded rails silently.** When a cloud clarification call fails and a fallback answers, the call is recorded as unresolved in the receipts and the shield takes a distinct silhouette in the menu bar — orange in the panel — with no sound and no alert. The mark persists until the cause clears, so a spent API key announces itself quietly the next time the owner glances up, instead of interrupting anything.
 
 ## Runtime privacy
 
